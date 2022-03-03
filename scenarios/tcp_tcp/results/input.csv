@@ -1,0 +1,5 @@
+name;metric;subset
+Fluent Bit;12.308840700000019;1Mx100chars
+Fluent Bit;24.752306799999985;1Mx1000chars
+Vector;12.821866799999952;1Mx100chars
+Vector;21.932145399999968;1Mx1000chars

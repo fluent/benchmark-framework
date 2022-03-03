@@ -1,0 +1,12 @@
+data_dir = "./tmp"
+
+# Ingest
+[sources.file]
+type = "file"
+include = ["./data/input.log"]
+read_from = "beginning"
+start_at_beginning = true
+
+[sinks.blackhole]
+inputs = ["file"]
+type = "blackhole"

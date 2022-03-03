@@ -1,0 +1,7 @@
+pipeline:
+  # input
+  - type: http_input
+    listen_address: 0.0.0.0:8099
+
+  # just drop
+  - type: drop_output

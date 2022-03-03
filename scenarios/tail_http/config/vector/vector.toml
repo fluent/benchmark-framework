@@ -1,0 +1,22 @@
+data_dir = "./tmp"
+
+# Ingest
+[sources.file]
+type = "file"
+include = ["./data/input.log"]
+read_from = "beginning"
+start_at_beginning = true
+max_line_bytes = 1024000
+
+[sinks.httpbenchmark]
+inputs = ["file"]
+type = "http"
+uri = "https://localhost:8443/something"
+compression = "none"
+#encoding.codec = "text"
+encoding = "ndjson"
+tls.verify_hostname = false
+tls.verify_certificate = false
+#buffer.type = "memory"
+#batch.timeout_secs = 1
+#batch.max_events = 1

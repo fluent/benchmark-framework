@@ -1,0 +1,7 @@
+pipeline:
+  # input
+  - type: tcp_input
+    listen_address: 0.0.0.0:5170
+
+  # just drop
+  - type: drop_output

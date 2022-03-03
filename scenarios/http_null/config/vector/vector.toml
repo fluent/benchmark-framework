@@ -1,0 +1,11 @@
+data_dir = "./tmp"
+
+# Ingest
+[sources.http]
+type = "http"
+address = "0.0.0.0:8099"
+encoding = "json"
+
+[sinks.blackhole]
+inputs = ["http"]
+type = "blackhole"

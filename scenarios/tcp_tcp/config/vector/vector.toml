@@ -1,0 +1,17 @@
+data_dir = "./tmp"
+
+# Ingest
+[sources.socket]
+type = "socket"
+address = "0.0.0.0:5170"
+decoding.codec = "json"
+framing.method = "newline_delimited"
+mode = "tcp"
+
+[sinks.tcpsink]
+inputs = ["socket"]
+type = "socket"
+address = "127.0.0.1:8443"
+#decoding.codec = "json"
+encoding = "json"
+mode = "tcp"

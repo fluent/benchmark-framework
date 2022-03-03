@@ -1,0 +1,13 @@
+data_dir = "./tmp"
+
+# Ingest
+[sources.socket]
+type = "socket"
+address = "0.0.0.0:5170"
+decoding.codec = "json"
+framing.method = "newline_delimited"
+mode = "tcp"
+
+[sinks.blackhole]
+inputs = ["socket"]
+type = "blackhole"

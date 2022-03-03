@@ -1,0 +1,12 @@
+{
+    "platform": "Windows",
+    "platform-release": "10",
+    "platform-version": "10.0.19044",
+    "architecture": "AMD64",
+    "processor": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
+    "physical_cores": 6,
+    "total_cores": 12,
+    "cpu_frequency_max": "3696.00Mhz",
+    "memory_ram": "32 GB",
+    "memory_swap": "22 GB"
+}

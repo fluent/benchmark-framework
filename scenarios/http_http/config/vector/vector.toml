@@ -1,0 +1,20 @@
+data_dir = "./tmp"
+
+# Ingest
+[sources.http]
+type = "http"
+address = "0.0.0.0:8099"
+encoding = "json"
+
+[sinks.httpbenchmark]
+inputs = ["http"]
+type = "http"
+uri = "https://localhost:8443/something"
+compression = "none"
+#encoding.codec = "text"
+encoding = "ndjson"
+tls.verify_hostname = false
+tls.verify_certificate = false
+#buffer.type = "memory"
+#batch.timeout_secs = 1
+#batch.max_events = 1

@@ -1,0 +1,7 @@
+pandas>=1.4.1
+psutil>=5.9.0
+plotly>=5.6.0
+requests>=2.27.1
+tabulate>=0.8.9
+kaleido
+dash
