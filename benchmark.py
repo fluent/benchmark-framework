@@ -58,7 +58,7 @@ def run_fluentbit(dir):
     if(sys.platform == "win32"):
         executable = "fluent-bit"
     else:
-        executable = "td-agent-bit"
+        executable = "fluent-bit"
 
     location = shutil.which(executable)
     if( location is None ):
