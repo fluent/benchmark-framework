@@ -2,16 +2,17 @@ from copyreg import pickle
 import os
 import pickle
 from click import Path
-import dash
-import dash_html_components as html
+#import dash
+#import dash_html_components as html
+from dash import Dash, html, dcc, dash_table, Output, Input
 import pandas as pd
 import plotly.graph_objects as go
-import dash_core_components as dcc
+#import dash_core_components as dcc
 import plotly.express as px
-from dash.dependencies import Input, Output
+#from dash.dependencies import Input, Output
 import chart
 
-app = dash.Dash()
+app = Dash()
 
 rootdir = 'scenarios'
 scenarios = {}
