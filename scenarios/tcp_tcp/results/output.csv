@@ -1,5 +1,0 @@
-name;metric;subset
-Fluent Bit;-1;1Mx100chars
-Fluent Bit;-1;1Mx1000chars
-Vector;13.855831100000046;1Mx100chars
-Vector;22.974065999999993;1Mx1000chars
