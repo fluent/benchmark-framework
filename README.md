@@ -42,3 +42,43 @@ python dashboard.py
 `
 
 Then go to ([http://localhost:8050](http://localhost:8050)) to see the results per scenario.
+
+## Adding Scenarios
+
+In order to add new scenarios you can start by copying the scenarios/_scenario_template folder.
+Name the scenario accoring to your scenario. For example based on the input and output used by the scenario.
+There is also a README.md in each scenario that describes what the scenario does.
+
+Each scenario consists of the following folders:
+
+### config:
+contains sub folders per log processor that should be executed for this scenario. Please note that the folder names and config file names are expected to be identical to the other scenarios.
+i.e.: /config/fluent-bit/fluent-bit.conf, /config/fluentd/fluentd.conf, /config/vector/vector.toml, /config/stanza/config.yaml
+
+### data:
+if your scenario requires some input data then this should be placed into this folder
+
+### tmp:
+temporary folder that will be cleared before each scenario execution
+
+### results:
+results of the scenario run.
+
+The benchmark framework will execute the scenario.py in the following order:
+
+***scenario.init()*** &rarr; allows you to initialize the scenario i.e. start/prepare the input
+
+***scenario.get_description()*** &rarr; provide scenario description to the framework
+
+&rarr;&rarr; after the init the benchmark framework will tart the log processor and the monitoring
+
+***scenario.wait()*** &rarr; wait till the scenario is done, you can start input/output also here if it makes sense for your scenario
+
+&rarr;&rarr; log processor and monitoring will be stopped
+
+***scenario.cleanup()*** &rarr; stop input, output and do cleanup
+
+***scenario.get_input_description()*** &rarr; if there is an input metric the scenario has to provide a description with the metric
+***scenario.get_input_metric()***
+***scenario.get_output_description()*** &rarr; if there is an output metric the scenario has to provide a description with the metric
+***scenario.get_output_metric()***

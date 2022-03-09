@@ -337,6 +337,8 @@ def run_benchmark(scenarios, logprocessors):
     for file in os.listdir(rootdir):
         scenario_dir = os.path.join(rootdir, file)
         if os.path.isdir(scenario_dir):
+            if('_scenario_template' in scenario_dir):
+                continue # always ignore the template
 
             if(not scenarios is None and not file in scenarios):
                 continue # skip scenario
