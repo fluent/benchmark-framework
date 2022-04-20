@@ -10,6 +10,7 @@ import os
 import pickle
 import platform
 import shutil
+import yaml
 
 if(sys.platform == "win32"):
     from signal import CTRL_BREAK_EVENT, CTRL_C_EVENT
@@ -53,46 +54,52 @@ else:
     kwargs.update(preexec_fn=preexec_function)
 
 
-def run_fluentbit(dir):
+def run_fluentbit(dir, location):
     print("Starting Fluent Bit")
     if(sys.platform == "win32"):
         executable = "fluent-bit"
     else:
         executable = "fluent-bit"
 
-    location = shutil.which(executable)
+    if not location:
+        location = shutil.which(executable)
+
     if( location is None ):
         return None
     configpath = os.path.abspath(os.path.join(dir, "config", "fluent-bit", "fluent-bit.conf"))
-    proc = ensure_proc_alive(subprocess.Popen([executable, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    proc = ensure_proc_alive(subprocess.Popen([location, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
     time.sleep(1) # got crashes sometimes without this on linux
     return proc
 
-def run_vector(dir):
+def run_vector(dir, location):
     print("Starting Vector")
 
-    location = shutil.which("vector")
+    if not location:
+        location = shutil.which("vector")
+
     if( location is None ):
         return None
 
     # note vector by default uses as many threads as CPU cores are available
     # see https://vector.dev/docs/reference/cli/#vector_threads
     configpath = os.path.abspath(os.path.join(dir, "config", "vector", "vector.toml"))
-    proc = ensure_proc_alive(subprocess.Popen(["vector", "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    proc = ensure_proc_alive(subprocess.Popen([location, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
     return proc
 
-def run_stanza(dir):
+def run_stanza(dir, location):
     print("Starting Stanza")
 
-    location = shutil.which("stanza")
+    if not location:
+        location = shutil.which("stanza")
+
     if( location is None ):
         return None
 
     configpath = os.path.abspath(os.path.join(dir, "config", "stanza", "config.yaml"))
-    proc = ensure_proc_alive(subprocess.Popen(["stanza", "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    proc = ensure_proc_alive(subprocess.Popen([location, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
     return proc
 
-def run_fluentd(dir):
+def run_fluentd(dir, location):
     print("Starting Fluentd")
     configpath = os.path.abspath(os.path.join(dir, "config", "fluentd", "fluentd.conf"))
     executeable = "td-agent"
@@ -101,12 +108,13 @@ def run_fluentd(dir):
     if(sys.platform == "win32"):
         executeable = executeable + ".bat"
 
-    location = shutil.which(executeable)
+    if not location:
+        location = shutil.which(executeable)
 
     if( location is None ):
         return None
 
-    proc = ensure_proc_alive(subprocess.Popen([executeable, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    proc = ensure_proc_alive(subprocess.Popen([location, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
     return proc
 
 
@@ -168,7 +176,9 @@ def stop_monitoring(monitor_thread):
 
 
 # run one scenrio
-def run_scenario(scenario_name, scenario_dir, logprocessor):
+def run_scenario(scenario_name, scenario_dir, logprocessor, **kwargs):
+    version = kwargs.get("version","")
+    location = kwargs.get("location","")
     abs_scenario_path = os.path.abspath(scenario_dir)
     print("\nRunning scenario: " + abs_scenario_path)
     cwd = os.getcwd()
@@ -196,13 +206,13 @@ def run_scenario(scenario_name, scenario_dir, logprocessor):
         logproc = None
         sendctrlbrk = False
         if( logprocessor == FLUENTBIT):
-            logproc = run_fluentbit(abs_scenario_path)
+            logproc = run_fluentbit(abs_scenario_path, location)
         elif( logprocessor == VECTOR):
-            logproc = run_vector(abs_scenario_path)
+            logproc = run_vector(abs_scenario_path, location)
         elif( logprocessor == STANZA):
-            logproc = run_stanza(abs_scenario_path)
+            logproc = run_stanza(abs_scenario_path, location)
         elif( logprocessor == FLUENTD):
-            logproc = run_fluentd(abs_scenario_path)
+            logproc = run_fluentd(abs_scenario_path, location)
         else:
             print("Unknown log processor: " + logprocessor)
             return
@@ -217,7 +227,7 @@ def run_scenario(scenario_name, scenario_dir, logprocessor):
 
         # start monitoring
         csvresult = os.path.join(abs_scenario_path,"results",prefix + "_result.csv")
-        monitor_thread = start_monitoring(str(logproc.pid), logprocessor, csvresult)
+        monitor_thread = start_monitoring(str(logproc.pid), logprocessor+f" {version}", csvresult)
 
         # by now the monitoring should be ready
         pslogproc.resume()
@@ -319,7 +329,10 @@ def main():
 
     parser.add_argument('-lps', '--logprocessors',
                         help='the comma separated list of log processors to run, default is to run all (fluent-bit,vector,stanza,fluentd)', required=False,
-                        type=lambda s: [item for item in s.split(',')])
+                        type=lambda s: [{item:{}} for item in s.split(',')])
+
+    parser.add_argument('-c', '--config',
+                        help='yaml file specifying the log processors to run, default is to run all (fluent-bit,vector,stanza,fluentd). This option overrides --logprocessors', required=False)
 
     args = parser.parse_args()
 
@@ -328,9 +341,20 @@ def main():
     #args.logprocessors = ['fluent-bit'] #,'stanza','fluentd']
     #args.logprocessors = ['vector','stanza','fluentd']
 
-    run_benchmark(args.scenarios, args.logprocessors)
+    run_benchmark(args.scenarios, args.logprocessors, args.config)
 
-def run_benchmark(scenarios, logprocessors):
+def run_benchmark(scenarios, logprocessors, config):
+    # if config file is passed, we get the log processors from the file
+    # if config file is passed, we ignore --logprocessors
+    if config:
+        with open(config, 'r') as f:
+            data = yaml.load(f, Loader=yaml.SafeLoader)
+        logprocessors = data["agents"]
+
+    # if config file as well as --logprocessors is not passed we run the scenarios for all log processors
+    if not logprocessors:
+        logprocessors = [{"fluent-bit": {}}, {"vector": {}}, {"stanza": {}}, {"fluentd": {}}]
+
     start_time = time.perf_counter()
     rootdir = 'scenarios'
     scenario_elapsed = {}
@@ -351,22 +375,31 @@ def run_benchmark(scenarios, logprocessors):
             # check which log processors the scenario supports
             log_processors = os.listdir( os.path.join(scenario_dir, 'config') )
             scenario_start_time = time.perf_counter()
-            for dir in log_processors:
+            # iterate through all the log processors in mentioned in the config
+            for dir in logprocessors:
+                processor = list(dir.keys())[0]
+                version = dir[processor].get("version", "")
+                location = dir[processor].get("location", "")
 
-                if(not logprocessors is None and not dir in logprocessors):
+                if(not processor in log_processors):
                     continue # skip log processor
 
-                if(dir in 'fluent-bit'):
-                    run_scenario(str(file),scenario_dir,FLUENTBIT)
-                elif(dir in 'vector'):
-                    run_scenario(str(file),scenario_dir,VECTOR)
-                elif(dir in 'stanza'):
-                    run_scenario(str(file),scenario_dir,STANZA)
-                elif(dir in 'fluentd'):
-                    run_scenario(str(file),scenario_dir,FLUENTD)
-
-            scenario_elapsed_time = time.perf_counter() - scenario_start_time
-            scenario_elapsed[str(file)] = scenario_elapsed_time
+                if(processor in 'fluent-bit'):
+                    run_scenario(str(file),scenario_dir,FLUENTBIT,version=version,location=location)
+                    scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
+                    scenario_start_time = time.perf_counter()
+                elif(processor in 'vector'):
+                    run_scenario(str(file),scenario_dir,VECTOR,version=version,location=location)
+                    scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
+                    scenario_start_time = time.perf_counter()
+                elif(processor in 'stanza'):
+                    run_scenario(str(file),scenario_dir,STANZA,version=version,location=location)
+                    scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
+                    scenario_start_time = time.perf_counter()
+                elif(processor in 'fluentd'):
+                    run_scenario(str(file),scenario_dir,FLUENTD,version=version,location=location)
+                    scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
+                    scenario_start_time = time.perf_counter()
 
     elapsed_time = time.perf_counter() - start_time
 

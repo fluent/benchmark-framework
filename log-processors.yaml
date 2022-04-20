@@ -1,0 +1,10 @@
+agents:
+  - fluent-bit:
+      version: 1.8
+      location: /opt/fluent-bit/bin/fluent-bit
+  - fluent-bit:
+      version: 1.9
+      location: /opt/fluent-bit/bin/fluent-bit
+  - vector:
+      version: 0.21.0
+      location: /home/aditya/.vector/bin/vector
