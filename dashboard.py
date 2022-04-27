@@ -1,5 +1,5 @@
 from copyreg import pickle
-import os
+import os, sys
 import pickle
 from click import Path
 #import dash
@@ -14,7 +14,17 @@ import chart
 
 app = Dash()
 
-rootdir = 'scenarios'
+try:
+    contents = os.listdir("results")
+    if contents:
+        rootdir = os.path.join("results", sorted(contents)[0])
+    else:
+        print("No results found to display. Please run benchmark.py before creating the dashboard")
+        sys.exit(1)
+except FileNotFoundError:
+    print("Results directory not found")
+    sys.exit(1)
+
 scenarios = {}
 
 # get all scenarios and data
@@ -23,13 +33,13 @@ for scenario in os.listdir(rootdir):
     descdict = {}
     scenario_dir = os.path.join(rootdir, scenario)
     if os.path.isdir(scenario_dir):
-        scenario_results = os.listdir( os.path.join(scenario_dir, 'results') )
+        scenario_results = os.listdir(scenario_dir)
         for file in scenario_results:
             if file.endswith(".csv"):
                 #only process csv files
-                csvlist.append(os.path.abspath(os.path.join(scenario_dir, 'results',file)))
+                csvlist.append(os.path.abspath(os.path.join(scenario_dir, file)))
             elif file.endswith(".pkl"):
-                descpath = os.path.abspath(os.path.join(scenario_dir, 'results',file))
+                descpath = os.path.abspath(os.path.join(scenario_dir, file))
                 descfile = open(descpath,'rb')
                 desc = pickle.load(descfile)
                 descfile.close()

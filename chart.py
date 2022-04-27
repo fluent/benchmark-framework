@@ -52,7 +52,7 @@ def createcharts(csvfile, desc=None, export_to_disk=False):
             )
             figs.append(fig)
             if( export_to_disk ):
-                fig.write_image('results/' + prefix + 'cpu.png')
+                fig.write_image(os.path.join(os.path.dirname(csvfile) , prefix+'cpu.png'))
 
             # disk
             fig = px.line(df, x='mpc', y='disk_io', color = 'name',
@@ -61,7 +61,7 @@ def createcharts(csvfile, desc=None, export_to_disk=False):
             )
             figs.append(fig)
             if( export_to_disk ):
-                fig.write_image('results/' + prefix + 'disk.png')
+                fig.write_image(os.path.join(os.path.dirname(csvfile) , prefix+'disk.png'))
 
             # memory
             fig = px.line(df, x='mpc', y='mem', color = 'name',
@@ -70,7 +70,7 @@ def createcharts(csvfile, desc=None, export_to_disk=False):
             )
             figs.append(fig)
             if( export_to_disk ):
-                fig.write_image('results/' + prefix + 'memory.png')
+                fig.write_image(os.path.join(os.path.dirname(csvfile),prefix+'memory.png'))
 
         else:
             # metric output
@@ -87,7 +87,7 @@ def createcharts(csvfile, desc=None, export_to_disk=False):
                 prefix = 'output_'
 
             if( export_to_disk ):
-                fig.write_image('results/' + prefix + 'metric.png')
+                fig.write_image(os.path.join(os.path.dirname(csvfile) , prefix+'metric.png'))
 
         return figs
 
