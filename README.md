@@ -82,3 +82,11 @@ The benchmark framework will execute the scenario.py in the following order:
 ***scenario.get_input_metric()***
 ***scenario.get_output_description()*** &rarr; if there is an output metric the scenario has to provide a description with the metric
 ***scenario.get_output_metric()***
+
+
+## General Info
+
+- This project was originally started at calyptia/benchmark-framework
+- Project was moved to chronosphereio/calyptia-benchmark-framework (archived)
+- Project has been moved in full to fluent/benchmark-framework
+
