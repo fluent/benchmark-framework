@@ -229,6 +229,7 @@ def stop_monitoring(monitor_thread):
 
 # run one scenrio
 
+<<<<<<< HEAD
 def run_scenario(scenario_name, scenario_dir, logprocessor, path_scenario, **kwargs):
     version = kwargs.get("version","")
     location = kwargs.get("location","")
@@ -239,6 +240,14 @@ def run_scenario(scenario_name, scenario_dir, logprocessor, path_scenario, **kwa
 
     logging.info("\nRunning scenario: " + abs_scenario_path)
 
+=======
+def run_scenario(scenario_name, scenario_dir, logprocessor, results_path=None, **kwargs):
+    version = kwargs.get("version","")
+    location = kwargs.get("location","")
+    abs_scenario_path = os.path.abspath(scenario_dir)
+    results_path = os.path.join(abs_scenario_path,'results')
+    print("\nRunning scenario: " + abs_scenario_path)
+>>>>>>> f5499dd (Understanding modifications and benchmark-framework dependencies)
     cwd = os.getcwd()
     logging.info(f'Working Directory: {cwd}')
     os.chdir(abs_scenario_path)

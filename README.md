@@ -11,12 +11,19 @@ The scenario.py file describes the scenarios and its sub scenarios (i.e. run the
 The config folder contains the scenario specific configuration file for each log processor.
 The name of the folder has to be one of these: fluent-bit, stanza, fluentd, vector
 
+<<<<<<< HEAD
 scenario.py is located under the path benchmark-framework/scenarios/_scenario_template
 
 Each scenario has its own folder inside the scenarios folder, under the structure:
 
 ### benchmark-framework > scenarios > http_http : 
 
+=======
+Each scenario has its own folder inside the scenarios folder, under the structure:
+
+### benchmark-framework > scenarios > http_http : 
+
+>>>>>>> f5499dd (Understanding modifications and benchmark-framework dependencies)
 This scenario sends JSON log lines via HTTP requests to the log processor.
 The output of the log processor is pointing to HTTP as well.
 For the HTTP output a https-benchmark-server instance is started by the scenario.
@@ -91,6 +98,7 @@ your environment to add the directory where https-benchmark-server is located to
 Please ensure you have PYTHONPYCACHEPREFIX environment variable set (i.e. /tmp/.pycache) to avoid __pycache__ in the project.
 
 ## Limitations on macOS
+<<<<<<< HEAD
 
 Limitations of psutil on macOS
 
@@ -213,6 +221,32 @@ The following only applies when the configuration file log-processor.yaml is not
 
 It will run all scenarios for all agents (fluent-bit, fluentd, stanza, and vector).
 
+=======
+
+Limitations of psutil on macOS
+
+I/O Counters Access (io_counters):
+On macOS, the io_counters() function of psutil is not supported, resulting in an AttributeError when attempting to 
+access this property for processes.
+
+Alternative: There is no direct alternative in psutil for macOS to obtain I/O counters. 
+For detailed I/O information, you may need OS-specific tools like dtrace.
+
+Due to this limitation, all tests will fail when attempting to tally input/output operations, and obtaining 
+such a metric in monitor_pid.py will fail, but it won't be blocking, and the program will continue.
+
+The failure due to library limitation occurs in:
+
+#### def _get_io_read(proc, withchildren)
+#### def _get_io_write(proc, withchildren)
+
+## Run the Benchmark
+
+`python benchmark.py`
+
+It will run all scenarios for all agents (fluent-bit, fluentd, stanza, and vector).
+
+>>>>>>> f5499dd (Understanding modifications and benchmark-framework dependencies)
 If you need to define a specific scenario or a set of them, you should specify the --scenarios parameter followed by the scenario names, separated by commas.
 
 Example:
