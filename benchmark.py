@@ -177,10 +177,11 @@ def stop_monitoring(monitor_thread):
 
 # run one scenrio
 
-def run_scenario(scenario_name, scenario_dir, logprocessor, **kwargs):
+def run_scenario(scenario_name, scenario_dir, logprocessor, results_path=None, **kwargs):
     version = kwargs.get("version","")
     location = kwargs.get("location","")
     abs_scenario_path = os.path.abspath(scenario_dir)
+    results_path = os.path.join(abs_scenario_path,'results')
     print("\nRunning scenario: " + abs_scenario_path)
     cwd = os.getcwd()
     os.chdir(abs_scenario_path)
