@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
+
 import psutil
 from datetime import datetime
 import pandas as pd
 import time
 import os
+import platform
+
 
 # need to keep global references to get cpu percent
 _subprocesses = {}
@@ -29,10 +33,10 @@ def main():
 
 
 def monitor(pid, name, csvfile="monitor_output.csv", callback=None, interval="0.5", withchildren=True):
-    
-    print("Monitoring PID: " + pid)
+    logging.info("Output file: " + csvfile)
+    logging.info("Monitoring PID: " + pid)
     proc = psutil.Process(int(pid))
-    print("Found process with pid: " + pid)
+    logging.info("Found process with pid: " + pid)
     
     df = None
     csvexists = False
@@ -69,9 +73,12 @@ def monitor(pid, name, csvfile="monitor_output.csv", callback=None, interval="0.
             cpu = _get_cpu(proc, withchildren)
             rss = _get_mem_rss(proc, withchildren)
             vms = _get_mem_vms(proc, withchildren)
-            ioread = _get_io_read(proc, withchildren)
-            iowrite = _get_io_write(proc, withchildren)            
-            
+            if platform.system() != "Darwin":
+                ioread = _get_io_read(proc, withchildren)
+                iowrite = _get_io_write(proc, withchildren)
+            else:
+                ioread = 0
+                iowrite = 0
             # we will report the main pid but sum all child process information if requested
             data = {
                 'pid': [pid],

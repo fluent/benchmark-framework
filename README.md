@@ -11,6 +11,8 @@ The scenario.py file describes the scenarios and its sub scenarios (i.e. run the
 The config folder contains the scenario specific configuration file for each log processor.
 The name of the folder has to be one of these: fluent-bit, stanza, fluentd, vector
 
+scenario.py is located under the path benchmark-framework/scenarios/_scenario_template
+
 Each scenario has its own folder inside the scenarios folder, under the structure:
 
 ### benchmark-framework > scenarios > http_http : 
@@ -107,9 +109,107 @@ The failure due to library limitation occurs in:
 #### def _get_io_read(proc, withchildren)
 #### def _get_io_write(proc, withchildren)
 
-## Run the Benchmark
+## Config / Run the Benchmark
+
+This version of benchmark-framework incorporates configuration via a YAML file: log-processor.yaml.
+
+File struture: 
+```yaml
+agents:
+  - name: fluent-bit
+    version: 1.8
+    path: /opt/fluent-bit/bin/fluent-bit
+  - name: vector
+    version: 0.21.0
+    path: /home/aditya/.vector/bin/vector
+  - name: stanza
+    version: 0.3.0
+    path: /home/stanza/bin/stanza
+scenarios:
+  type:
+    - tail_http
+    - http_http
+    - http_null
+    - tail_null
+    - tcp_null
+    - tcp_tcp
+  agents_scenarios:
+    - fluent-bit
+    - vector
+    - stanza
+    - fluentd
+logging:
+  version: 1
+  handlers:
+    console:
+      level: DEBUG
+      stream: ext://sys.stdout
+    file:
+      level: DEBUG
+      filename: default.log
+  root:
+    level: DEBUG
+    handlers: [file]
+```
+In this structure you can define:
+
+### agents: 
+
+These are the agents that are available to be executed (name and version).
+
+### scenarios>types: 
+
+These are the types of scenarios that are currently available. 
+All those that appear in this list will be executed. If you want to exclude any, 
+simply add the # symbol in front of the list item, for example:
+```yaml
+scenarios:
+  type:
+    - tail_http
+    - http_http
+    #- http_null
+    - tail_null
+    #- tcp_null
+    #- tcp_tcp
+```
+This indicates that all those starting with # should be ignored.
+
+### scenarios>agents_scenarios: 
+
+These are the agents that will be executed for the defined scenarios. Similar to the previous point, 
+if you don't want to execute a particular agent, simply add the # symbol in front of the agent's 
+list item to be ignored, for example:
+
+```yaml
+agents_scenarios:
+    - fluent-bit
+    #- vector
+    #- stanza
+    #- fluentd
+```
+We have also added a section for the output log information of the benchmark program, 
+which indicates the name of the output log file and whether it should be sent to 
+console or file:
+
+logging>handlers>file>filename: Indicates the name of the output file. 
+This filename can be modified here in log-processor.yaml or specified in the command line:
+
+ benchmark.py --logfile <filename>.log
+
+This will take priority over the filename specified in the logging section of the YAML.
+
+## Execution of benchmark.py
+
+If executed as python benchmark.py without specifying parameters, the configuration indicated in 
+log-processor.yaml will be used. This will always take precedence over the scenarios and agents 
+specified via the command line.
+
+Only the log output to file takes precedence over what is indicated in the YAML configuration file.
+
 
 `python benchmark.py`
+
+The following only applies when the configuration file log-processor.yaml is not available.
 
 It will run all scenarios for all agents (fluent-bit, fluentd, stanza, and vector).
 
