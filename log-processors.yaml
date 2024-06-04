@@ -1,10 +1,35 @@
 agents:
-  - fluent-bit:
-      version: 1.8
-      location: /opt/fluent-bit/bin/fluent-bit
-  - fluent-bit:
-      version: 1.9
-      location: /opt/fluent-bit/bin/fluent-bit
-  - vector:
-      version: 0.21.0
-      location: /home/aditya/.vector/bin/vector
+  - name: fluent-bit
+    version: 1.8
+    path: /opt/fluent-bit/bin/fluent-bit
+  - name: vector
+    version: 0.21.0
+    path: /home/aditya/.vector/bin/vector
+  - name: stanza
+    version: 0.3.0
+    path: /home/stanza/bin/stanza
+scenarios:
+  type:
+    - tail_http
+    - http_http
+    - http_null
+    - tail_null
+    - tcp_null
+    - tcp_tcp
+  agents_scenarios:
+    - fluent-bit
+    - vector
+    - stanza
+    - fluentd
+logging:
+  version: 1
+  handlers:
+    console:
+      level: DEBUG
+      stream: ext://sys.stdout
+    file:
+      level: DEBUG
+      filename: default.log
+  root:
+    level: DEBUG
+    handlers: [file]
