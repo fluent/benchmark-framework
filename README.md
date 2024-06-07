@@ -11,19 +11,12 @@ The scenario.py file describes the scenarios and its sub scenarios (i.e. run the
 The config folder contains the scenario specific configuration file for each log processor.
 The name of the folder has to be one of these: fluent-bit, stanza, fluentd, vector
 
-<<<<<<< HEAD
-scenario.py is located under the path benchmark-framework/scenarios/_scenario_template
+### benchmark-framework > scenarios > http_http : 
 
 Each scenario has its own folder inside the scenarios folder, under the structure:
 
 ### benchmark-framework > scenarios > http_http : 
 
-=======
-Each scenario has its own folder inside the scenarios folder, under the structure:
-
-### benchmark-framework > scenarios > http_http : 
-
->>>>>>> f5499dd (Understanding modifications and benchmark-framework dependencies)
 This scenario sends JSON log lines via HTTP requests to the log processor.
 The output of the log processor is pointing to HTTP as well.
 For the HTTP output a https-benchmark-server instance is started by the scenario.
@@ -98,7 +91,6 @@ your environment to add the directory where https-benchmark-server is located to
 Please ensure you have PYTHONPYCACHEPREFIX environment variable set (i.e. /tmp/.pycache) to avoid __pycache__ in the project.
 
 ## Limitations on macOS
-<<<<<<< HEAD
 
 Limitations of psutil on macOS
 
@@ -246,8 +238,8 @@ The failure due to library limitation occurs in:
 
 It will run all scenarios for all agents (fluent-bit, fluentd, stanza, and vector).
 
->>>>>>> f5499dd (Understanding modifications and benchmark-framework dependencies)
-If you need to define a specific scenario or a set of them, you should specify the --scenarios parameter followed by the scenario names, separated by commas.
+If you need to define a specific scenario or a set of them, you should specify the --scenarios parameter 
+followed by the scenario names, separated by commas.
 
 Example:
 
