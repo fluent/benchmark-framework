@@ -229,7 +229,7 @@ def stop_monitoring(monitor_thread):
 
 # run one scenrio
 
-<<<<<<< HEAD
+
 def run_scenario(scenario_name, scenario_dir, logprocessor, path_scenario, **kwargs):
     version = kwargs.get("version","")
     location = kwargs.get("location","")
@@ -240,14 +240,6 @@ def run_scenario(scenario_name, scenario_dir, logprocessor, path_scenario, **kwa
 
     logging.info("\nRunning scenario: " + abs_scenario_path)
 
-=======
-def run_scenario(scenario_name, scenario_dir, logprocessor, results_path=None, **kwargs):
-    version = kwargs.get("version","")
-    location = kwargs.get("location","")
-    abs_scenario_path = os.path.abspath(scenario_dir)
-    results_path = os.path.join(abs_scenario_path,'results')
-    print("\nRunning scenario: " + abs_scenario_path)
->>>>>>> f5499dd (Understanding modifications and benchmark-framework dependencies)
     cwd = os.getcwd()
     logging.info(f'Working Directory: {cwd}')
     os.chdir(abs_scenario_path)
@@ -487,17 +479,17 @@ def run_benchmark(scenarios, logprocessors, config):
                     scenario_start_time = time.perf_counter()
                 elif(processor in 'vector'):
                     logging.info('Init scenario vector')
-                    run_scenario(str(file),scenario_dir,VECTOR,version=version,location=location)
+                    run_scenario(str(file),scenario_dir,VECTOR,result_dir,version=version,location=location)
                     scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
                     scenario_start_time = time.perf_counter()
                 elif(processor in 'stanza'):
                     logging.info('Init scenario stanza')
-                    run_scenario(str(file),scenario_dir,STANZA,version=version,location=location)
+                    run_scenario(str(file),scenario_dir,STANZA,result_dir,version=version,location=location)
                     scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
                     scenario_start_time = time.perf_counter()
                 elif(processor in 'fluentd'):
                     logging.info('Init scenario fluentd')
-                    run_scenario(str(file),scenario_dir,FLUENTD,version=version,location=location)
+                    run_scenario(str(file),scenario_dir,FLUENTD,result_dir,version=version,location=location)
                     scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
                     scenario_start_time = time.perf_counter()
 
