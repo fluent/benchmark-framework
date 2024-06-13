@@ -59,8 +59,13 @@ Config for Benchmark framework
 File for config : log-processor.yaml
 """
 def setup_benchmark(config_file, log_file=None):
+
     with open(config_file, 'r') as file:
         config = yaml.safe_load(file)
+
+    # check agents
+    if ( not check_agents(config)):
+        sys.exit()
 
     if log_file:
         config['logging']['handlers']['file']['filename'] = log_file
@@ -93,6 +98,30 @@ def setup_benchmark(config_file, log_file=None):
 
     return type_values, agents_scenarios_values
 
+
+def check_agents(config):
+
+    agents = config.get('agents', [])
+    agents_scenarios = config.get('scenarios', {}).get('agents_scenarios', [])
+
+    # Crear un diccionario para acceder rápidamente a los paths de los agentes
+    agents_dict = {agent['name']: agent['path'] for agent in agents}
+
+    all_found = True
+
+    for agent in agents_scenarios:
+        if agent in agents_dict:
+            path = agents_dict[agent]
+            if os.path.exists(path):
+                print(f"Agent {agent} found OK")
+            else:
+                print(f"Agent {agent} not found at path: {path}")
+                all_found = False
+        else:
+            print(f"Agent {agent} is not defined in  {agents}.")
+            all_found = False
+
+    return all_found
 
 def run_fluentbit(dir, location):
     logging.info("Starting Fluent Bit")

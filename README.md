@@ -5,6 +5,40 @@ This is a generic benchmark to measure the performance of log processors for giv
 A scenario is a particular test that can be configured and executed with fluent-bit, fluentd, 
 stanza, and vector.
 
+## Setup Environment
+
+Before run program must create as  virtual environment, follow these steps:
+
+1. Set Up a Virtual Environment
+A virtual environment allows you to create an isolated Python environment where you can install packages and run programs independently of your system-wide Python installation.
+
+pip install virtualenv
+
+Now, create a new virtual environment. Navigate to your project directory in the terminal and run:
+
+virtualenv venv
+
+This command creates a directory named venv which contains a complete Python environment isolated from your system Python.
+
+Activate the Virtual Environment
+* On macOS/Linux:
+
+source venv/bin/activate
+
+* On Windows:
+
+venv\Scripts\activate
+
+After activation, your terminal prompt will change to indicate that you are now using the virtual environment ((venv) will typically appear at the beginning of the prompt).
+
+2. Install Dependencies (if any)
+
+If program X has dependencies specified in a requirements.txt file, you can install them into your virtual environment using pip:
+
+pip install -r requirements.txt
+
+Replace requirements.txt with the actual name of the requirements file if it's different.
+
 ### Description of the directory structure
 
 The scenario.py file describes the scenarios and its sub scenarios (i.e. run the same scenario with different data sets).
