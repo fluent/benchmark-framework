@@ -18,6 +18,7 @@ try:
     contents = os.listdir("results")
     if contents:
         rootdir = os.path.join("results", sorted(contents)[0])
+        print("--->>> "+rootdir)
     else:
         print("No results found to display. Please run benchmark.py before creating the dashboard")
         sys.exit(1)

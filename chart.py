@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
+
 import psutil
 from datetime import datetime
 import pandas as pd
@@ -10,6 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as py
 import scenarios.common
+import logging.config
 
 chartlabels = {
     'mpc': 'Measuring Point',
@@ -21,8 +24,14 @@ chartlabels = {
     }
 
 def createcharts(csvfile, desc=None, export_to_disk=False):
+    logging.info('create the chart :')
+    logging.info(f'csvfile: {csvfile}:')
+    logging.info(f'desc name:{desc.get_name} subtitle:{desc.get_subtitle} - prefis:{desc.get_file_prefix}')
+    logging.info(f'export to disk :{export_to_disk}')
+
+
     if(not os.path.exists(csvfile) ):
-        print('File not found: ' + csvfile)
+        logging.error(f'File not found: {csvfile}')
         return
 
     try:
@@ -92,4 +101,5 @@ def createcharts(csvfile, desc=None, export_to_disk=False):
         return figs
 
     except KeyboardInterrupt:  # pragma: no cover
+        logging.error(KeyboardInterrupt)
         pass

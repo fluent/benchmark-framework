@@ -11,6 +11,7 @@ import pickle
 import platform
 import shutil
 import yaml
+import logging.config
 
 if(sys.platform == "win32"):
     from signal import CTRL_BREAK_EVENT, CTRL_C_EVENT
@@ -40,7 +41,7 @@ logproc = None
 
 def preexec_function():
     if(not sys.platform == "win32"):
-        print("---> PREEXEC_FUNCTION")
+        logging.info("---> PREEXEC_FUNCTION")
         # Ignore the SIGCON signal by setting the handler to the standard
         # signal handler SIG_IGN.
         #signal.signal(signal.SIGCONT, signal.SIG_IGN)
@@ -53,9 +54,48 @@ if sys.platform == "win32":
 else:
     kwargs.update(preexec_fn=preexec_function)
 
+"""
+Config for Benchmark framework
+File for config : log-processor.yaml
+"""
+def setup_benchmark(config_file, log_file=None):
+    with open(config_file, 'r') as file:
+        config = yaml.safe_load(file)
+
+    if log_file:
+        config['logging']['handlers']['file']['filename'] = log_file
+        if 'file' not in config['logging']['root']['handlers']:
+            config['logging']['root']['handlers'].append('file')
+    else:
+        config['logging']['root']['handlers'] = ['console']
+
+    config['logging']['handlers']['console']['class'] = 'logging.StreamHandler'
+    config['logging']['handlers']['file']['class'] = 'logging.FileHandler'
+
+    config['logging']['formatters'] = {
+        'simple': {
+            'format': '%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - Line:%(lineno)d - %(message)s'
+        }
+    }
+
+    # formatter for handlr
+    config['logging']['handlers']['console']['formatter'] = 'simple'
+    config['logging']['handlers']['file']['formatter'] = 'simple'
+
+    # Configure logger
+    logging.config.dictConfig(config['logging'])
+
+    # Obtain scenarios and agents
+    scenarios = config.get('scenarios', {})
+
+    type_values = scenarios.get('type', [])
+    agents_scenarios_values = scenarios.get('agents_scenarios', [])
+
+    return type_values, agents_scenarios_values
+
 
 def run_fluentbit(dir, location):
-    print("Starting Fluent Bit")
+    logging.info("Starting Fluent Bit")
     if(sys.platform == "win32"):
         executable = "fluent-bit"
     else:
@@ -67,12 +107,14 @@ def run_fluentbit(dir, location):
     if( location is None ):
         return None
     configpath = os.path.abspath(os.path.join(dir, "config", "fluent-bit", "fluent-bit.conf"))
+    logging.info(f'configPath: {configpath}')
     proc = ensure_proc_alive(subprocess.Popen([location, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    logging.info(f'proc: {proc}')
     time.sleep(1) # got crashes sometimes without this on linux
     return proc
 
 def run_vector(dir, location):
-    print("Starting Vector")
+    logging.info("Starting Vector")
 
     if not location:
         location = shutil.which("vector")
@@ -83,11 +125,14 @@ def run_vector(dir, location):
     # note vector by default uses as many threads as CPU cores are available
     # see https://vector.dev/docs/reference/cli/#vector_threads
     configpath = os.path.abspath(os.path.join(dir, "config", "vector", "vector.toml"))
+    logging.info(f'configPath: {configpath}')
     proc = ensure_proc_alive(subprocess.Popen([location, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    logging.info(f'proc: {proc}')
+
     return proc
 
 def run_stanza(dir, location):
-    print("Starting Stanza")
+    logging.info("Starting Stanza")
 
     if not location:
         location = shutil.which("stanza")
@@ -96,12 +141,16 @@ def run_stanza(dir, location):
         return None
 
     configpath = os.path.abspath(os.path.join(dir, "config", "stanza", "config.yaml"))
+    logging.info(f'configPath: {configpath}')
     proc = ensure_proc_alive(subprocess.Popen([location, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    logging.info(f'proc: {proc}')
+
     return proc
 
 def run_fluentd(dir, location):
-    print("Starting Fluentd")
+    logging.info("Starting Fluentd")
     configpath = os.path.abspath(os.path.join(dir, "config", "fluentd", "fluentd.conf"))
+    logging.info(f'configPath: {configpath}')
     executeable = "td-agent"
 
     # on Windows td-agent works from console but Popen needs .bat added
@@ -115,6 +164,7 @@ def run_fluentd(dir, location):
         return None
 
     proc = ensure_proc_alive(subprocess.Popen([location, "-c", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    logging.info(f'proc: {proc}')
     return proc
 
 
@@ -122,7 +172,9 @@ def ensure_proc_alive(proc):
     poll = proc.poll()
     # process still alive?
     if poll is not None:
-        sys.exit("Failed to start process")
+        strExit='Failed to start process'
+        logging.error(strExit)
+        sys.exit(strExit)
     return proc
 
 def clear_dir(basedir, folder ):
@@ -132,8 +184,8 @@ def clear_dir(basedir, folder ):
             shutil.rmtree(dir)
         os.mkdir(dir)
     except OSError as e:
-        print('cwd: ' + os.getcwd())
-        print("\t" + e.strerror)
+        logging.error('cwd: ' + os.getcwd())
+        logging.error("\t" + e.strerror)
         pass
 
 # dynamically load the python class for the given scenario
@@ -177,16 +229,24 @@ def stop_monitoring(monitor_thread):
 
 # run one scenrio
 
-def run_scenario(scenario_name, scenario_dir, logprocessor, results_path=None, **kwargs):
+
+def run_scenario(scenario_name, scenario_dir, logprocessor, path_scenario, **kwargs):
     version = kwargs.get("version","")
     location = kwargs.get("location","")
     abs_scenario_path = os.path.abspath(scenario_dir)
-    results_path = os.path.join(abs_scenario_path,'results')
-    print("\nRunning scenario: " + abs_scenario_path)
+    results_path = os.path.join(path_scenario,'results')
+
+    os.makedirs(results_path, exist_ok=True)
+
+    logging.info("\nRunning scenario: " + abs_scenario_path)
+
     cwd = os.getcwd()
+    logging.info(f'Working Directory: {cwd}')
     os.chdir(abs_scenario_path)
+    logging.info(f'Path: {abs_scenario_path}')
 
     # load the scenario implementation
+    logging.info(f'load the scenario : {scenario_name}')
     scenario = get_scenario_instance(scenario_name)
 
     while scenario.has_next():
@@ -216,11 +276,11 @@ def run_scenario(scenario_name, scenario_dir, logprocessor, results_path=None, *
         elif( logprocessor == FLUENTD):
             logproc = run_fluentd(abs_scenario_path, location)
         else:
-            print("Unknown log processor: " + logprocessor)
+            logging.error("Unknown log processor: " + logprocessor)
             return
 
         if( logproc is None):
-            print(logprocessor + " log processor not found, skipping.")
+            logging.info(logprocessor + " log processor not found, skipping.")
             break
 
         # avoid a super quick process to be gone before we can monitor it
@@ -228,8 +288,9 @@ def run_scenario(scenario_name, scenario_dir, logprocessor, results_path=None, *
         pslogproc.suspend()
 
         # start monitoring
+        csvresult = os.path.join(path_scenario,"results",prefix + "_result.csv")
+        logging.info(f'results at: {csvresult}')
 
-        csvresult = os.path.join(abs_scenario_path,"results",prefix + "_result.csv")
         monitor_thread = start_monitoring(str(logproc.pid), logprocessor+f" {version}", csvresult)
 
         # by now the monitoring should be ready
@@ -250,7 +311,7 @@ def run_scenario(scenario_name, scenario_dir, logprocessor, results_path=None, *
 
         retries = 0
         while logproc.poll() == None and retries <3:
-            print("waiting for log processor process to shutdown")
+            logging.info("waiting for log processor process to shutdown")
             retries += 1
             time.sleep(1)
 
@@ -258,7 +319,7 @@ def run_scenario(scenario_name, scenario_dir, logprocessor, results_path=None, *
         logproc.wait()
 
         while logproc.poll() == None:
-            print("waiting for log processor process to terminate")
+            logging.info("waiting for log processor process to terminate")
             time.sleep(1)
 
         # stop input, output and do cleanup
@@ -307,6 +368,7 @@ def write_system_info(filepath):
 
     with open(filepath, 'w') as file:
         json_string = json.dump(info,file, indent=4)
+        logging.info(f'system info json_string: {json_string}')
 
 def write_metric(metric, csvfile, name, subset):
     data = {
@@ -317,9 +379,10 @@ def write_metric(metric, csvfile, name, subset):
     df = pd.DataFrame(data)
     if( os.path.exists(csvfile) ):
         df.to_csv(csvfile, sep=';', mode='a', index=False, header=None) # append to the csv
+        logging.info(df.info)
     else:
         df.to_csv(csvfile, sep=';', mode='a', index=False) # append to the csv with header
-
+        logging.info(df.info)
 
 def main():
     # runs all the scenarios by default
@@ -337,12 +400,30 @@ def main():
     parser.add_argument('-c', '--config',
                         help='yaml file specifying the log processors to run, default is to run all (fluent-bit,vector,stanza,fluentd). This option overrides --logprocessors', required=False)
 
+    parser.add_argument('-f', '--logfile',type=str,
+                        help='the file logger output.',
+                        required=False)
+
     args = parser.parse_args()
+
+    # call logger config
+
+    log_file = args.logfile
+    scenarios_type_values, agents_scenarios_values = setup_benchmark('log-processors.yaml', log_file)
+
+    if scenarios_type_values:
+        args.scenarios = scenarios_type_values
+    if agents_scenarios_values:
+        args.logprocessors = [{item: {}} for item in agents_scenarios_values]
 
     # dev test
     #args.scenarios = ['tcp_tcp','tcp_null']
     #args.logprocessors = ['fluent-bit'] #,'stanza','fluentd']
     #args.logprocessors = ['vector','stanza','fluentd']
+
+    # Log the arguments for verification
+    logging.info("Scenarios: " + str(args.scenarios))
+    logging.info("Log Processors: " + str(args.logprocessors))
 
     run_benchmark(args.scenarios, args.logprocessors, args.config)
 
@@ -381,40 +462,45 @@ def run_benchmark(scenarios, logprocessors, config):
             # check which log processors the scenario supports
             log_processors = os.listdir( os.path.join(scenario_dir, 'config') )
             scenario_start_time = time.perf_counter()
+            logging.info(f'Init time {scenario_start_time}')
             # iterate through all the log processors in mentioned in the config
             for dir in logprocessors:
                 processor = list(dir.keys())[0]
                 version = dir[processor].get("version", "")
                 location = dir[processor].get("location", "")
-
+                logging.info(f'Versión processor: {version} - location: {location}')
                 if(not processor in log_processors):
                     continue # skip log processor
 
                 if(processor in 'fluent-bit'):
-                    run_scenario(str(file),scenario_dir,FLUENTBIT,version=version,location=location)
+                    logging.info('Init scenario fluent-bit')
+                    run_scenario(str(file),scenario_dir,FLUENTBIT,result_dir,version=version,location=location)
                     scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
                     scenario_start_time = time.perf_counter()
                 elif(processor in 'vector'):
-                    run_scenario(str(file),scenario_dir,VECTOR,version=version,location=location)
+                    logging.info('Init scenario vector')
+                    run_scenario(str(file),scenario_dir,VECTOR,result_dir,version=version,location=location)
                     scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
                     scenario_start_time = time.perf_counter()
                 elif(processor in 'stanza'):
-                    run_scenario(str(file),scenario_dir,STANZA,version=version,location=location)
+                    logging.info('Init scenario stanza')
+                    run_scenario(str(file),scenario_dir,STANZA,result_dir,version=version,location=location)
                     scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
                     scenario_start_time = time.perf_counter()
                 elif(processor in 'fluentd'):
-                    run_scenario(str(file),scenario_dir,FLUENTD,version=version,location=location)
+                    logging.info('Init scenario fluentd')
+                    run_scenario(str(file),scenario_dir,FLUENTD,result_dir,version=version,location=location)
                     scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
                     scenario_start_time = time.perf_counter()
 
     elapsed_time = time.perf_counter() - start_time
 
-    print("\n\n--------------------------------------------------------------------------")
-    print("\nSUCCESSFULLY FINISHED in " + time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
-    print("\nScenario Execution Times:\n")
-    print(tabulate(scenario_elapsed.items(), headers=['Name', 'Elapsed Time']))
+    logging.info("\n\n--------------------------------------------------------------------------")
+    logging.info("\nSUCCESSFULLY FINISHED in " + time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+    logging.info("\nScenario Execution Times:\n")
+    logging.info(tabulate(scenario_elapsed.items(), headers=['Name', 'Elapsed Time']))
 
-    print("\n--------------------------------------------------------------------------")
+    logging.info("\n--------------------------------------------------------------------------")
 
 
 if __name__ == "__main__":
