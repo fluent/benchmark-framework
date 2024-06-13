@@ -11,8 +11,6 @@ The scenario.py file describes the scenarios and its sub scenarios (i.e. run the
 The config folder contains the scenario specific configuration file for each log processor.
 The name of the folder has to be one of these: fluent-bit, stanza, fluentd, vector
 
-### benchmark-framework > scenarios > http_http : 
-
 Each scenario has its own folder inside the scenarios folder, under the structure:
 
 ### benchmark-framework > scenarios > http_http : 
@@ -57,7 +55,6 @@ The output of the log processor is pointing to tcp/socket as well.
 For the tcp/socket output a socket server instance is started by the scenario.
 The scenario is done once all sent requests are received by the backend or the maximum scenario time has elapsed.
 
-
 ## Prerequisites
 
 1. Python Interpreter
@@ -72,6 +69,7 @@ it is not a Python virtual environment, use pip3 install -r requirements.txt).
 2. Log Procesor
 
 In addition you need to have the log processor executables on your path:
+
 
 * [Download fluent-bit](https://docs.fluentbit.io/manual/installation/getting-started-with-fluent-bit)
 * [Download stanza](https://github.com/observIQ/stanza)
@@ -212,25 +210,6 @@ Only the log output to file takes precedence over what is indicated in the YAML 
 The following only applies when the configuration file log-processor.yaml is not available.
 
 It will run all scenarios for all agents (fluent-bit, fluentd, stanza, and vector).
-
-=======
-
-Limitations of psutil on macOS
-
-I/O Counters Access (io_counters):
-On macOS, the io_counters() function of psutil is not supported, resulting in an AttributeError when attempting to 
-access this property for processes.
-
-Alternative: There is no direct alternative in psutil for macOS to obtain I/O counters. 
-For detailed I/O information, you may need OS-specific tools like dtrace.
-
-Due to this limitation, all tests will fail when attempting to tally input/output operations, and obtaining 
-such a metric in monitor_pid.py will fail, but it won't be blocking, and the program will continue.
-
-The failure due to library limitation occurs in:
-
-#### def _get_io_read(proc, withchildren)
-#### def _get_io_write(proc, withchildren)
 
 ## Run the Benchmark
 
