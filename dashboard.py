@@ -11,19 +11,59 @@ import plotly.graph_objects as go
 import plotly.express as px
 #from dash.dependencies import Input, Output
 import chart
+import yaml
+import logging.config
+
 
 app = Dash()
 
+
+"""
+Config for dashboard 
+File for config : log-processor.yaml
+"""
+def setup_benchmark(config_file, log_file=None):
+    with open(config_file, 'r') as file:
+        config = yaml.safe_load(file)
+
+    if log_file:
+        config['logging']['handlers']['file']['filename'] = log_file
+        if 'file' not in config['logging']['root']['handlers']:
+            config['logging']['root']['handlers'].append('file')
+    else:
+        config['logging']['root']['handlers'] = ['console']
+
+    config['logging']['handlers']['console']['class'] = 'logging.StreamHandler'
+    config['logging']['handlers']['file']['class'] = 'logging.FileHandler'
+
+    config['logging']['formatters'] = {
+        'simple': {
+            'format': '%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - Line:%(lineno)d - %(message)s'
+        }
+    }
+
+    # formatter for handlr
+    config['logging']['handlers']['console']['formatter'] = 'simple'
+    config['logging']['handlers']['file']['formatter'] = 'simple'
+
+    # Configure logger
+    logging.config.dictConfig(config['logging'])
+
+    return
+
+
 try:
+    setup_benchmark('log-processors.yaml', None)
     contents = os.listdir("results")
     if contents:
         rootdir = os.path.join("results", sorted(contents)[0])
-        print("--->>> "+rootdir)
+        logging.info("--->>> "+rootdir)
+
     else:
-        print("No results found to display. Please run benchmark.py before creating the dashboard")
+        logging.info("No results found to display. Please run benchmark.py before creating the dashboard")
         sys.exit(1)
 except FileNotFoundError:
-    print("Results directory not found")
+    logging.info("Results directory not found")
     sys.exit(1)
 
 scenarios = {}
@@ -32,7 +72,7 @@ scenarios = {}
 for scenario in os.listdir(rootdir):
     csvlist = []
     descdict = {}
-    scenario_dir = os.path.join(rootdir, scenario)
+    scenario_dir = os.path.join(rootdir, scenario,"results")
     if os.path.isdir(scenario_dir):
         scenario_results = os.listdir(scenario_dir)
         for file in scenario_results:
@@ -50,7 +90,7 @@ for scenario in os.listdir(rootdir):
         metadata = {}
         metadata['csv'] = csvlist
         metadata['desc'] = descdict
-        print(metadata)
+        logging.info(metadata)
         scenarios[scenario] = metadata
 
 scenarios_opt = []
@@ -73,6 +113,8 @@ for key in scenarios:
         if(default_value is None):
             default_value = key
         scenarios_opt.append(option)
+
+logging.info(f'option/values :{scenarios_opt}')
 
 
 app.layout = html.Div(id = 'parent', children = [
@@ -117,15 +159,15 @@ def graphs_from_csv(csvfile, dropdown_value, csvcounter):
     desc = None
     idstr = None
     if(csvfile.endswith('input.csv')):
-        print('Adding input graph')
+        logging.info('Adding input graph')
         desc = metadata['desc']['input_desc']
         idstr = "1_input"
     elif(csvfile.endswith('output.csv')):
-        print('Adding output graph')
+        logging.info('Adding output graph')
         desc = metadata['desc']['output_desc']
         idstr = "2_output"
     else:
-        print('Adding (sub)scenario graphs')
+        logging.info('Adding (sub)scenario graphs')
         prefix = os.path.basename(csvfile).split("_")[0]
         desc = metadata['desc'][prefix +'_scenario_desc']
 
