@@ -105,6 +105,7 @@ def check_agents(config):
     agents_scenarios = config.get('scenarios', {}).get('agents_scenarios', [])
 
     # Create a dictionary to quickly access the agents’ paths
+
     agents_dict = {agent['name']: agent['path'] for agent in agents}
 
     all_found = True

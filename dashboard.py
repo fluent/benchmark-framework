@@ -59,6 +59,7 @@ try:
         folders = sorted(os.listdir("results"), key=lambda x: os.path.getctime(os.path.join("results", x)),
                          reverse=True)
         rootdir = os.path.join("results", folders[0])
+
         logging.info("--->>> "+rootdir)
 
     else:
