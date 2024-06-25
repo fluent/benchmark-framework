@@ -36,7 +36,7 @@ FLUENTBIT = "Fluent Bit"
 VECTOR = "Vector"
 STANZA = "Stanza"
 FLUENTD = "Fluentd"
-
+OTELCOLLECTOR = "Otel Collector"
 logproc = None
 
 def preexec_function():
@@ -196,6 +196,23 @@ def run_fluentd(dir, location):
     logging.info(f'proc: {proc}')
     return proc
 
+def run_otelcollector(dir, location):
+    logging.info("Starting Otel Collector")
+
+    if not location:
+        location = shutil.which("otelcontribcol")
+
+    if( location is None ):
+        return None
+
+    configpath = os.path.abspath(os.path.join(dir, "config", "otel-collector", "otel-collector.yaml"))
+    logging.info(f'configPath: {configpath}')
+    proc = ensure_proc_alive(subprocess.Popen([location, "--config", configpath],stdout=sys.stdout, stderr=sys.stderr, **kwargs))
+    logging.info(f'proc: {proc}')
+
+    return proc
+
+
 
 def ensure_proc_alive(proc):
     poll = proc.poll()
@@ -304,6 +321,8 @@ def run_scenario(scenario_name, scenario_dir, logprocessor, path_scenario, **kwa
             logproc = run_stanza(abs_scenario_path, location)
         elif( logprocessor == FLUENTD):
             logproc = run_fluentd(abs_scenario_path, location)
+        elif (logprocessor == OTELCOLLECTOR):
+            logproc = run_otelcollector(abs_scenario_path, location)
         else:
             logging.error("Unknown log processor: " + logprocessor)
             return
@@ -383,6 +402,7 @@ def run_scenario(scenario_name, scenario_dir, logprocessor, path_scenario, **kwa
     os.chdir(cwd)
 
 def write_system_info(filepath):
+    logging.info(f'Writing system info to {filepath}')
     info={}
     info['platform']=platform.system()
     info['platform-release']=platform.release()
@@ -395,9 +415,10 @@ def write_system_info(filepath):
     info['memory_ram']=str(round(psutil.virtual_memory().total / (1024.0 **3)))+" GB"
     info['memory_swap']=str(round(psutil.swap_memory().total / (1024.0 **3)))+" GB"
 
+    json_string = json.dumps(info, indent=4)
+    logging.info(f'system info json_string: {json_string}')
     with open(filepath, 'w') as file:
-        json_string = json.dump(info,file, indent=4)
-        logging.info(f'system info json_string: {json_string}')
+        json.dump(info,file, indent=4)
 
 def write_metric(metric, csvfile, name, subset):
     data = {
@@ -520,6 +541,12 @@ def run_benchmark(scenarios, logprocessors, config):
                     logging.info('Init scenario fluentd')
                     run_scenario(str(file),scenario_dir,FLUENTD,result_dir,version=version,location=location)
                     scenario_elapsed[f"{file}_{processor} {version}"] = f"{time.perf_counter()-scenario_start_time:.2f}s"
+                    scenario_start_time = time.perf_counter()
+                elif (processor in 'otel-collector'):
+                    logging.info('Init scenario otel-collector')
+                    run_scenario(str(file), scenario_dir, OTELCOLLECTOR, result_dir, version=version, location=location)
+                    scenario_elapsed[
+                        f"{file}_{processor} {version}"] = f"{time.perf_counter() - scenario_start_time:.2f}s"
                     scenario_start_time = time.perf_counter()
 
     elapsed_time = time.perf_counter() - start_time

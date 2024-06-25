@@ -1,26 +1,30 @@
 agents:
   - name: fluent-bit
     version: 1.8
-    path: /opt/fluent-bit/bin/fluent-bit
+    path: /opt/homebrew/bin/fluent-bit
   - name: vector
     version: 0.21.0
     path: /home/aditya/.vector/bin/vector
   - name: stanza
     version: 0.3.0
     path: /home/stanza/bin/stanza
+  - name: otel-collector
+    version: 0.103.0-dev
+    path: /Users/flowcollective/Documents/DESARROLLO/GoProjects/opentelemetry-collector-contrib/bin/otelcontribcol
 scenarios:
   type:
-    - tail_http
-    - http_http
-    - http_null
+    #- tail_http
+    #- http_http
+    #- http_null
     - tail_null
-    - tcp_null
-    - tcp_tcp
+    #- tcp_null
+    #- tcp_tcp
   agents_scenarios:
-    - fluent-bit
-    - vector
-    - stanza
-    - fluentd
+    #- fluent-bit
+    #- vector
+    #- stanza
+    #- fluentd
+    - otel-collector
 logging:
   version: 1
   handlers:

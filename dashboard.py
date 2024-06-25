@@ -56,7 +56,9 @@ try:
     setup_benchmark('log-processors.yaml', None)
     contents = os.listdir("results")
     if contents:
-        rootdir = os.path.join("results", sorted(contents)[0])
+        folders = sorted(os.listdir("results"), key=lambda x: os.path.getctime(os.path.join("results", x)),
+                         reverse=True)
+        rootdir = os.path.join("results", folders[0])
         logging.info("--->>> "+rootdir)
 
     else:
