@@ -100,7 +100,7 @@ To do this, you must install the dependencies in your Python virtual environment
 pip install -r requirements.txt (ideally within your virtual environment created for Python 3.x, or if 
 it is not a Python virtual environment, use pip3 install -r requirements.txt).
 
-2. Log Procesor
+2. Log Processor
 
 In addition you need to have the log processor executables on your path:
 
@@ -109,6 +109,7 @@ In addition you need to have the log processor executables on your path:
 * [Download stanza](https://github.com/observIQ/stanza)
 * [Download fluentd](https://www.fluentd.org/download)
 * [Download vector](https://github.com/vectordotdev/vector)
+* [Download otel-collector](https://opentelemetry.io/docs/collector/installation/)
 
 3. For the HTTP scenarios you need the ([https-benchmark-server](https://github.com/chronosphereio/calyptia-https-benchmark-server)) on your path as well.
 
@@ -157,6 +158,9 @@ agents:
   - name: stanza
     version: 0.3.0
     path: /home/stanza/bin/stanza
+  - name: otel-collector
+    version: 0.103.0-dev
+    path: /opt/opentelemetry-collector-contrib/bin/otelcontribcol
 scenarios:
   type:
     - tail_http
@@ -170,6 +174,7 @@ scenarios:
     - vector
     - stanza
     - fluentd
+    - otel-collector
 logging:
   version: 1
   handlers:
@@ -187,7 +192,7 @@ In this structure you can define:
 
 ### agents: 
 
-These are the agents that are available to be executed (name and version).
+These are the agents that are available to be executed (name, version & path ).
 
 ### scenarios>types: 
 
@@ -218,6 +223,7 @@ agents_scenarios:
     #- vector
     #- stanza
     #- fluentd
+    - otel-collector
 ```
 We have also added a section for the output log information of the benchmark program, 
 which indicates the name of the output log file and whether it should be sent to 
@@ -238,7 +244,6 @@ specified via the command line.
 
 Only the log output to file takes precedence over what is indicated in the YAML configuration file.
 
-
 `python benchmark.py`
 
 The following only applies when the configuration file log-processor.yaml is not available.
@@ -249,7 +254,13 @@ It will run all scenarios for all agents (fluent-bit, fluentd, stanza, and vecto
 
 `python benchmark.py`
 
-It will run all scenarios for all agents (fluent-bit, fluentd, stanza, and vector).
+It will run all scenarios for all agents configured in log-processor.yaml (fluent-bit, fluentd, stanza, and vector).
+
+When using `python benchmark.py`, it will always use the configuration file log-processor.yaml, which, as seen before, 
+configures the agents, specifies where to find each one, lists the available scenarios to execute, and specifies 
+which agent to run in particular.
+
+If using command-line parameters is needed, follow these instructions:
 
 If you need to define a specific scenario or a set of them, you should specify the --scenarios parameter 
 followed by the scenario names, separated by commas.
@@ -273,12 +284,13 @@ The available scenarios for --scenarios parameter are::
 * tcp_null
 * tcp_tcp
 
-The available log processors for --logprocessors parameter are:
+The available log processors for --logprocessors (or in the log-processor.yaml) parameter are:
 
 * fluent-bit
 * fluentd
 * stanza
 * vector
+* otel-collector (aka open telemetry collector)
 
 ## Benchmark Results
 
@@ -305,6 +317,12 @@ python dashboard.py
 `
 
 Then go to ([http://localhost:8050](http://localhost:8050)) to see the results per scenario.
+
+![Example with Fluent Bit](imgs/FluentBit_LogProcessorBenchmarkResults.png)
+
+![Example with OpenTelemetry](imgs/LogProcessorBenchmarkResults.png)
+
+dashboard.py takes the last folder from the ‘results’ directory to display in the browser.
 
 ## Adding Scenarios
 
